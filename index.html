@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hazi_SOG · Minecraft Plugin Developer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0d10;
+    --bg2:#151922;
+    --fg:#eef1f4;
+    --muted:#8a9099;
+    --accent:#5898d4;
+    --accent2:#8ab4e8;
+    --accent-warm:#7ec8a8;
+    --glass-bg:rgba(255,255,255,.045);
+    --glass-bg-soft:rgba(255,255,255,.025);
+    --glass-border:rgba(255,255,255,.10);
+    --glass-border-strong:rgba(255,255,255,.18);
+    --glass-hi:rgba(255,255,255,.16);
+    --shadow:0 30px 80px -20px rgba(0,0,0,.6);
+    --tile-shadow:0 20px 50px -20px rgba(0,0,0,.5);
+    --grain-opacity:.11;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} }
+  section[id], [id="home"]{scroll-margin-top:100px}
+  body{
+    background:var(--bg);
+    color:var(--fg);
+    font-family:"Geist",ui-sans-serif,system-ui,sans-serif;
+    font-size:15px;line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    width:100%;max-width:1280px;margin:0 auto;overflow-x:hidden;
+    position:relative;
+    letter-spacing:-.005em;
+  }
+  a{color:inherit;text-decoration:none}
+  .mono{font-family:"Geist Mono",ui-monospace,monospace;font-size:11px;letter-spacing:.02em;text-transform:uppercase;color:var(--muted)}
+
+  .ambient{
+    --b1x:20%; --b1y:15%; --b1rx:40%; --b1ry:35%;
+    --b2x:80%; --b2y:25%; --b2rx:35%; --b2ry:30%;
+    --b3x:50%; --b3y:90%; --b3rx:50%; --b3ry:40%;
+    position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(120% 72% at 50% -10%, color-mix(in srgb, var(--accent2) 36%, transparent), transparent 60%),
+      radial-gradient(var(--b1rx) var(--b1ry) at var(--b1x) var(--b1y), color-mix(in srgb, var(--accent) 32%, transparent), transparent 62%),
+      radial-gradient(var(--b2rx) var(--b2ry) at var(--b2x) var(--b2y), color-mix(in srgb, var(--accent-warm) 26%, transparent), transparent 66%),
+      radial-gradient(var(--b3rx) var(--b3ry) at var(--b3x) var(--b3y), color-mix(in srgb, var(--accent2) 30%, transparent), transparent 66%),
+      linear-gradient(180deg, color-mix(in srgb, var(--bg2) 82%, white 7%) 0%, var(--bg) 50%, color-mix(in srgb, var(--bg) 84%, black 12%) 100%);
+    filter:saturate(78%);
+  }
+  body::after{
+    content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/></svg>");
+    opacity:var(--grain-opacity);mix-blend-mode:overlay;
+  }
+  .stage{position:relative;z-index:1}
+
+  .glass{
+    background:var(--glass-bg);
+    backdrop-filter:blur(28px) saturate(170%);
+    -webkit-backdrop-filter:blur(28px) saturate(170%);
+    border:1px solid var(--glass-border);
+    border-radius:22px;
+    box-shadow:
+      var(--shadow),
+      inset 0 1px 0 var(--glass-hi),
+      inset 0 0 0 1px var(--glass-bg-soft);
+  }
+  .nav{
+    position:sticky;top:18px;z-index:60;
+    margin:18px 24px 0;
+    padding:10px 14px;
+    display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px;
+    border-radius:99px;
+  }
+  .nav .logo{
+    display:flex;align-items:center;gap:10px;
+    font-weight:600;letter-spacing:-.01em;font-size:15px;padding:0 6px 0 4px;
+  }
+  .nav .logo .dot{
+    width:28px;height:28px;border-radius:99px;
+    background:radial-gradient(circle at 30% 30%, var(--accent2), var(--accent) 60%, color-mix(in srgb, var(--accent) 50%, #000) 100%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 6px 16px -4px color-mix(in srgb,var(--accent) 60%, transparent);
+  }
+  .nav .menu{
+    display:flex;gap:2px;justify-content:center;
+    padding:4px;border-radius:99px;
+    background:var(--glass-bg-soft);
+    border:1px solid var(--glass-border);
+  }
+  .nav .menu a{
+    font-size:13px;color:#aab0b9;padding:8px 14px;border-radius:99px;
+    transition:background .25s,color .25s;white-space:nowrap;
+  }
+  .nav .menu a:hover{color:var(--fg);background:var(--glass-bg)}
+  .nav .menu a.active{color:var(--fg);background:var(--glass-bg);box-shadow:inset 0 1px 0 var(--glass-hi)}
+  .nav .right{display:flex;justify-content:flex-end;align-items:center;gap:10px}
+  .pill{
+    display:inline-flex;gap:8px;align-items:center;font-family:"Geist Mono",monospace;font-size:11px;color:var(--fg);
+    padding:6px 12px;border-radius:99px;background:var(--glass-bg);border:1px solid var(--glass-border);
+  }
+  .pill .blip{width:7px;height:7px;border-radius:99px;background:#5be38e;box-shadow:0 0 10px #5be38e}
+  .lang{
+    display:inline-flex;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:99px;padding:3px;
+    font-family:"Geist Mono",monospace;font-size:11px;letter-spacing:.02em;
+  }
+  .lang button{
+    border:0;background:transparent;padding:5px 11px;border-radius:99px;cursor:pointer;
+    color:var(--muted);font:inherit;letter-spacing:inherit;
+    transition:background .2s,color .2s;
+  }
+  .lang button.on{background:var(--fg);color:var(--bg)}
+
+  .hero{
+    margin:18px 24px 0;
+    padding:18px;overflow:hidden;
+    display:grid;grid-template-columns:1fr 1.4fr;gap:28px;align-items:center;
+  }
+  .hero-info{
+    padding:24px 30px;
+    position:relative;
+    display:flex;flex-direction:column;justify-content:center;
+  }
+  .hero-info::before{
+    content:"";position:absolute;inset:auto -40% -40% auto;width:80%;height:80%;
+    background:radial-gradient(circle, color-mix(in srgb, var(--accent) 35%, transparent), transparent 60%);
+    filter:blur(40px);pointer-events:none;
+  }
+  .h-eyebrow{display:flex;align-items:center;gap:10px;margin-bottom:36px;position:relative}
+  .h-eyebrow .dot{width:8px;height:8px;border-radius:99px;background:var(--accent);box-shadow:0 0 12px var(--accent)}
+  .h-sub{
+    margin-top:28px;max-width:540px;font-size:18px;line-height:1.45;color:var(--fg);opacity:.85;
+    position:relative;
+  }
+  .h-actions{margin-top:32px;display:flex;gap:10px;position:relative}
+  .btn{
+    display:inline-flex;align-items:center;gap:10px;
+    padding:14px 22px;border-radius:99px;
+    font-size:14px;font-weight:500;letter-spacing:-.005em;
+    cursor:pointer;transition:transform .25s,background .25s;
+    border:1px solid var(--glass-border);
+  }
+  .btn.primary{
+    background:linear-gradient(180deg, color-mix(in srgb,var(--accent) 90%, white 10%), var(--accent));
+    color:#fff;border-color:transparent;
+    box-shadow:0 14px 30px -10px color-mix(in srgb,var(--accent) 70%, transparent),
+               inset 0 1px 0 rgba(255,255,255,.35);
+  }
+  .btn.primary:hover{transform:translateY(-1px)}
+  .btn.ghost{
+    background:var(--glass-bg);color:var(--fg);
+    box-shadow:inset 0 1px 0 var(--glass-hi);
+  }
+  .btn.ghost:hover{background:var(--glass-bg-soft)}
+  .btn .arr{font-size:16px;line-height:1}
+
+  .hero-socials{
+    margin-top:32px;display:flex;gap:10px;position:relative;
+  }
+  .social-ic{
+    width:46px;height:46px;border-radius:99px;
+    display:inline-flex;align-items:center;justify-content:center;
+    background:var(--glass-bg);border:1px solid var(--glass-border);
+    box-shadow:inset 0 1px 0 var(--glass-hi);
+    transition:background .25s,transform .25s,border-color .25s;
+  }
+  .social-ic:hover{background:var(--glass-bg-soft);border-color:var(--glass-border-strong);transform:translateY(-1px)}
+  .social-ic svg{width:20px;height:20px;color:var(--accent)}
+
+  .hero-media{
+    position:relative;border-radius:16px;overflow:hidden;
+    border:1px solid var(--glass-border);
+    aspect-ratio:4/3;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--bg2);
+  }
+  .hero-media .code-placeholder{
+    font-family:"Geist Mono",monospace;font-size:13px;line-height:1.8;
+    padding:28px;color:var(--muted);white-space:pre;
+    overflow:hidden;width:100%;
+  }
+  .hero-media .code-placeholder .kw{color:#c792ea}
+  .hero-media .code-placeholder .ty{color:#82aaff}
+  .hero-media .code-placeholder .str{color:#c3e88d}
+  .hero-media .code-placeholder .cm{color:#546e7a}
+  .hero-media .code-placeholder .fn{color:#82aaff}
+  .hero-media .code-placeholder .num{color:#f78c6c}
+
+  .section-head{
+    padding:80px 24px 18px;
+    display:flex;align-items:end;justify-content:space-between;gap:24px;
+  }
+  .section-head .title{
+    font-family:"Geist",sans-serif;font-weight:500;letter-spacing:-.03em;font-size:56px;line-height:1;margin:0;
+  }
+  .section-head .title b{font-weight:600}
+  .section-head .title .grad{
+    background:linear-gradient(120deg, var(--accent2), var(--accent) 60%, var(--accent-warm));
+    -webkit-background-clip:text;background-clip:text;color:transparent;font-style:italic;
+    padding-right:.2em;
+  }
+  .works{padding:0 24px;display:grid;grid-template-columns:repeat(12,1fr);gap:18px;align-items:start}
+  .work{
+    position:relative;border-radius:22px;overflow:hidden;
+    border:1px solid var(--glass-border);
+    box-shadow:var(--tile-shadow);
+    cursor:pointer;
+    transition:transform .5s cubic-bezier(.2,.7,.2,1), border-color .3s;
+    background:var(--bg2);
+    min-height:260px;
+    display:flex;flex-direction:column;
+  }
+  .work:hover{transform:translateY(-4px);border-color:var(--glass-border-strong)}
+  .work .work-content{
+    padding:28px 24px 24px;
+    display:flex;flex-direction:column;flex:1;
+  }
+  .work .work-icon{font-size:32px;margin-bottom:12px}
+  .work .work-name{
+    font-size:20px;font-weight:600;letter-spacing:-.02em;
+  }
+  .work .work-desc{
+    font-size:14px;color:var(--muted);margin-top:8px;line-height:1.5;flex:1;
+  }
+  .work .work-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
+  .work .work-tag{
+    font-family:"Geist Mono",monospace;font-size:10px;letter-spacing:.02em;
+    padding:5px 10px;border-radius:99px;
+    background:var(--glass-bg);border:1px solid var(--glass-border);
+    color:var(--accent2);
+  }
+  .work .work-link{
+    display:inline-flex;align-items:center;gap:6px;
+    font-family:"Geist Mono",monospace;font-size:11px;
+    color:var(--accent);margin-top:16px;
+    transition:gap .25s;
+  }
+  .work:hover .work-link{gap:10px}
+
+  .work.w1{grid-column:span 7}
+  .work.w2{grid-column:span 5}
+  .work.w3{grid-column:span 4}
+  .work.w4{grid-column:span 4}
+  .work.w5{grid-column:span 4}
+
+  .tools{margin:80px 24px 0;padding:40px 36px}
+  .tools-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:24px}
+  .tools-head h3{margin:0;font-family:"Geist",sans-serif;font-weight:500;font-size:32px;letter-spacing:-.02em}
+  .tools-row{display:flex;flex-wrap:wrap;gap:8px}
+  .tool{
+    display:inline-flex;align-items:center;gap:10px;
+    padding:9px 16px;border-radius:99px;
+    background:var(--glass-bg-soft);border:1px solid var(--glass-border);
+    box-shadow:inset 0 1px 0 var(--glass-hi);
+    font-size:14px;font-weight:500;
+    transition:background .25s,border-color .25s;
+  }
+  .tool:hover{background:var(--glass-bg);border-color:var(--glass-border-strong)}
+  .tool .dot{width:7px;height:7px;border-radius:99px;background:var(--accent);box-shadow:0 0 8px var(--accent)}
+  .tool .tool-ic{width:17px;height:17px;flex:none;object-fit:contain;display:block}
+  .tool .role{color:var(--muted);font-family:"Geist Mono",monospace;font-size:10px;letter-spacing:.04em;text-transform:uppercase;font-weight:400}
+
+  .project-detail{
+    margin:80px 24px 0;padding:40px 36px;
+    display:grid;grid-template-columns:1fr 1fr;gap:28px;
+  }
+  .project-detail .pd-name{
+    font-size:28px;font-weight:600;letter-spacing:-.02em;margin:0 0 8px;
+  }
+  .project-detail .pd-desc{
+    color:var(--muted);font-size:15px;line-height:1.6;margin:0 0 20px;
+  }
+  .project-detail .pd-features{
+    display:grid;grid-template-columns:1fr 1fr;gap:8px;list-style:none;padding:0;margin:0;
+  }
+  .project-detail .pd-features li{
+    font-size:13px;color:var(--fg);opacity:.8;
+    display:flex;align-items:center;gap:8px;
+  }
+  .project-detail .pd-features li::before{content:"▸";color:var(--accent);font-weight:700}
+
+  .contact{
+    margin:80px 24px 24px;padding:80px 48px;
+    text-align:center;position:relative;overflow:hidden;
+  }
+  .contact::before{
+    content:"";position:absolute;inset:auto -10% -50%;width:120%;height:120%;
+    background:
+      radial-gradient(circle at 30% 30%, color-mix(in srgb,var(--accent) 55%, transparent), transparent 50%),
+      radial-gradient(circle at 70% 60%, color-mix(in srgb,var(--accent-warm) 50%, transparent), transparent 55%);
+    filter:blur(50px);pointer-events:none;
+  }
+  .contact h2{
+    font-family:"Geist",sans-serif;font-weight:400;letter-spacing:-.04em;
+    font-size:100px;line-height:.95;margin:0;position:relative;
+  }
+  .contact h2 b{font-weight:600}
+  .contact h2 .grad{
+    background:linear-gradient(120deg, var(--accent2), var(--accent) 60%, var(--accent-warm));
+    -webkit-background-clip:text;background-clip:text;color:transparent;font-style:italic;
+    padding-right:.18em;
+  }
+  .contact .sub{
+    margin:28px auto 0;max-width:520px;font-size:17px;color:var(--fg);opacity:.85;position:relative;
+  }
+  .contact-actions{
+    margin-top:40px;display:flex;justify-content:center;gap:10px;position:relative;flex-wrap:wrap;
+  }
+  .clink{
+    display:inline-flex;align-items:center;gap:12px;padding:14px 22px;border-radius:99px;
+    background:var(--glass-bg);border:1px solid var(--glass-border);
+    box-shadow:inset 0 1px 0 var(--glass-hi);
+    transition:background .25s,transform .25s,border-color .25s;
+  }
+  .clink:hover{background:var(--glass-bg-soft);border-color:var(--glass-border-strong);transform:translateY(-1px)}
+  .clink svg{width:18px;height:18px;color:var(--accent)}
+  .clink .name{font-weight:500;font-size:15px}
+  .clink .handle{color:var(--muted);font-family:"Geist Mono",monospace;font-size:11px;margin-left:6px}
+
+  .social-ic,.clink{position:relative}
+  button.social-ic,button.clink{font:inherit;color:var(--fg);cursor:pointer;-webkit-appearance:none;appearance:none}
+  [data-tip]::after{
+    content:attr(data-tip);
+    position:absolute;left:50%;bottom:calc(100% + 9px);transform:translate(-50%,4px);
+    padding:6px 10px;border-radius:10px;white-space:nowrap;
+    font-family:"Geist",sans-serif;font-weight:600;font-size:12px;letter-spacing:-.01em;
+    color:#f3eefe;background:rgba(18,14,24,.94);border:1px solid var(--glass-border);
+    box-shadow:0 8px 24px rgba(0,0,0,.4);
+    opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;z-index:6;
+  }
+  [data-tip]:hover::after,[data-tip]:focus-visible::after{opacity:1;transform:translate(-50%,0)}
+
+  footer{
+    padding:32px 24px;color:var(--muted);
+    display:flex;justify-content:space-between;font-family:"Geist Mono",monospace;font-size:11px;letter-spacing:.02em;
+  }
+
+  .reveal{opacity:0;transform:translateY(14px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.7,.2,1)}
+  .reveal.in{opacity:1;transform:none}
+
+  @media (max-width:900px){
+    .nav{margin:28px 24px 0;padding:10px 12px;gap:10px;top:22px}
+    .nav .logo{font-size:15px;gap:9px}
+    .nav .logo .dot{width:26px;height:26px}
+    .nav .menu{gap:0;padding:4px}
+    .nav .menu a{font-size:13px;padding:7px 12px}
+    .nav .right{gap:8px}
+    .nav .right .pill{padding:6px 11px;font-size:11px}
+
+    .hero{grid-template-columns:1fr;padding:14px;gap:16px}
+    .hero-info{padding:18px 16px 12px}
+    .h-eyebrow{margin-bottom:28px}
+    .h-sub{font-size:17px;margin-top:24px}
+    .h-actions{margin-top:30px;flex-wrap:wrap}
+    .hero-media{aspect-ratio:16/9}
+
+    .section-head{padding:80px 24px 18px;gap:16px;flex-wrap:wrap;align-items:flex-end}
+    .section-head .title{font-size:46px}
+
+    .works{grid-template-columns:repeat(6,1fr);gap:14px;padding:0 24px}
+    .work.w1{grid-column:span 6}
+    .work.w2{grid-column:span 6}
+    .work.w3{grid-column:span 3}
+    .work.w4{grid-column:span 3}
+    .work.w5{grid-column:span 6}
+
+    .tools{margin:80px 24px 0;padding:36px 32px}
+    .tools-head{margin-bottom:22px}
+    .tools-head h3{font-size:28px}
+    .tool{padding:10px 16px;font-size:14px}
+
+    .project-detail{margin:80px 24px 0;padding:36px 32px;grid-template-columns:1fr}
+
+    .contact{margin:80px 24px 56px;padding:80px 32px}
+    .contact h2{font-size:64px;line-height:.95}
+    .contact .sub{margin-top:28px;font-size:17px;max-width:480px}
+    .contact-actions{margin-top:36px;gap:10px}
+
+    footer{padding:40px 24px 56px;gap:12px;flex-wrap:wrap}
+  }
+
+  @media (max-width:560px){
+    body{font-size:15px}
+
+    .nav{margin:22px 18px 0;padding:8px 12px;grid-template-columns:auto 1fr;gap:8px;top:18px}
+    .nav .menu{display:none}
+    .nav .right{gap:8px;justify-content:flex-end}
+    .nav .right .pill{display:none}
+    .lang button{padding:5px 10px;font-size:11px}
+    .nav .logo{font-size:15px}
+    .nav .logo .dot{width:26px;height:26px}
+
+    .hero{padding:12px;gap:14px}
+    .hero-info{padding:16px 14px 12px}
+    .h-eyebrow{margin-bottom:22px}
+    .h-eyebrow .mono{font-size:11px}
+    .h-sub{font-size:16px;margin-top:22px;line-height:1.5}
+    .h-actions{margin-top:28px;gap:10px}
+    .btn{padding:13px 20px;font-size:14px}
+    .hero-media{aspect-ratio:16/9;border-radius:14px}
+
+    .section-head{padding:72px 18px 14px;flex-direction:column;align-items:flex-start;gap:8px}
+    .section-head .title{font-size:38px}
+
+    .works{grid-template-columns:1fr;gap:12px;padding:0 18px}
+    .work.w1,.work.w2,.work.w3,.work.w4,.work.w5{grid-column:1}
+    .work .work-content{padding:22px 20px 20px}
+
+    .tools{margin:72px 18px 0;padding:30px 22px}
+    .tools-head{flex-direction:column;align-items:flex-start;gap:6px;margin-bottom:20px}
+    .tools-head h3{font-size:28px}
+    .tool{padding:10px 14px;font-size:14px}
+
+    .project-detail{margin:72px 18px 0;padding:30px 22px;grid-template-columns:1fr}
+
+    .contact{margin:72px 18px 56px;padding:64px 22px}
+    .contact h2{font-size:42px;line-height:1}
+    .contact .sub{font-size:16px;margin-top:24px}
+    .contact-actions{margin-top:32px;flex-direction:column;gap:10px}
+    .clink{width:100%;justify-content:center;padding:13px 20px}
+
+    footer{padding:40px 18px 56px;flex-direction:column;align-items:flex-start;gap:8px;font-size:11px}
+  }
+</style>
+</head>
+<body>
+
+<div class="ambient"></div>
+
+<div class="stage">
+
+<nav class="nav glass">
+  <a class="logo" href="#">
+    <span class="dot"></span>
+    <span data-i18n="nav.logo">Hazi_SOG</span>
+  </a>
+  <div class="menu">
+    <a class="active" href="#home" data-i18n="nav.home">Home</a>
+    <a href="#works" data-i18n="nav.works">Works</a>
+    <a href="#tools" data-i18n="nav.tools">Stack</a>
+    <a href="#contact" data-i18n="nav.contact">Contact</a>
+  </div>
+  <div class="right">
+    <span class="pill"><span class="blip"></span><span data-i18n="nav.avail">Available</span></span>
+    <div class="lang">
+      <button data-lang="ru">RU</button>
+      <button data-lang="en" class="on">EN</button>
+    </div>
+  </div>
+</nav>
+
+<section id="home" class="hero glass">
+  <div class="hero-info">
+    <div class="h-eyebrow"><span class="dot"></span><span class="mono" data-i18n="hero.eyebrow">Minecraft Plugin Developer · Paper · since 2024</span></div>
+    <p class="h-sub" data-i18n="hero.sub">I craft high-performance Minecraft plugins for Paper 1.21 servers — async-first, backed by Redis &amp; MySQL, built to scale. Code that's as beautiful as the gameplay it powers.</p>
+    <div class="hero-socials">
+      <a class="social-ic" href="https://github.com/shacoladny-cloud" target="_blank" rel="noopener" aria-label="GitHub" data-i18n-tip="tip.gh">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.15-1.1-1.46-1.1-1.46-.9-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.1-4.56-4.9 0-1.08.39-1.96 1.03-2.65-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02.8-.22 1.65-.33 2.5-.33.85 0 1.7.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.69 1.03 1.57 1.03 2.65 0 3.8-2.34 4.65-4.57 4.89.36.31.68.92.68 1.85v2.74c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0012 2z"/></svg>
+      </a>
+      <a class="social-ic" href="https://t.me/HaziSOG" target="_blank" rel="noopener" aria-label="Telegram" data-i18n-tip="tip.tg">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>
+      </a>
+      <a class="social-ic" href="mailto:shacoladny.cloud@gmail.com" aria-label="Email" data-i18n-tip="tip.email">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      </a>
+    </div>
+    <div class="h-actions">
+      <a class="btn primary" href="#works"><span data-i18n="hero.cta2">See my plugins</span><span class="arr">→</span></a>
+      <a class="btn ghost" href="#contact"><span data-i18n="hero.cta1">Get in touch</span></a>
+    </div>
+  </div>
+  <div class="hero-media">
+    <div class="code-placeholder"><span class="cm">// Hazi_SOG</span>
+<span class="kw">public final class</span> <span class="ty">PluginDeveloper</span> {
+    <span class="kw">private final</span> <span class="ty">String</span> name = <span class="str">"Hazi_SOG"</span>;
+    <span class="kw">private final</span> <span class="ty">String</span> stack = <span class="str">"Java + Paper API"</span>;
+
+    <span class="kw">public</span> <span class="ty">Plugin</span> <span class="fn">develop</span>() {
+        <span class="kw">return new</span> <span class="ty">PluginBuilder</span>()
+            .<span class="fn">async</span>(<span class="kw">true</span>)
+            .<span class="fn">redis</span>(<span class="kw">true</span>)
+            .<span class="fn">mysql</span>(<span class="kw">true</span>)
+            .<span class="fn">build</span>();
+    }
+
+    <span class="cm">// Performance isn't a feature —</span>
+    <span class="cm">// it's a requirement.</span>
+}</div>
+  </div>
+</section>
+
+<div class="section-head">
+  <h2 class="title"><b data-i18n="works.h1">Featured</b> <span class="grad" data-i18n="works.h2">projects</span></h2>
+</div>
+
+<section id="works" class="works">
+  <div class="work w1 reveal">
+    <div class="work-content">
+      <div class="work-icon">🎮</div>
+      <div class="work-name">MiniGamesCore</div>
+      <div class="work-desc" data-i18n="works.mgc">A full-featured minigame framework for Paper 1.21 with BedWars, SkyWars &amp; CTF. Arena system, stats, kits, custom events API, and MySQL storage.</div>
+      <div class="work-tags"><span class="work-tag">Paper 1.21</span><span class="work-tag">MySQL</span><span class="work-tag">HikariCP</span></div>
+      <a class="work-link" href="https://github.com/shacoladny-cloud/MiniGames" target="_blank" rel="noopener">View on GitHub <span>→</span></a>
+    </div>
+  </div>
+  <div class="work w2 reveal">
+    <div class="work-content">
+      <div class="work-icon">⚔️</div>
+      <div class="work-name">ClansPlugin</div>
+      <div class="work-desc" data-i18n="works.clans">Cross-server clan system with async operations, Redis pub/sub, invite system, role management, and MySQL persistence with full caching.</div>
+      <div class="work-tags"><span class="work-tag">Redis</span><span class="work-tag">MySQL</span><span class="work-tag">Async</span></div>
+      <a class="work-link" href="https://github.com/shacoladny-cloud/ClansPlugin" target="_blank" rel="noopener">View on GitHub <span>→</span></a>
+    </div>
+  </div>
+  <div class="work w3 reveal">
+    <div class="work-content">
+      <div class="work-icon">💬</div>
+      <div class="work-name">ChatManager</div>
+      <div class="work-desc" data-i18n="works.chat">Advanced chat management with global/local chat modes, player mentions, and full PlaceholderAPI integration.</div>
+      <div class="work-tags"><span class="work-tag">Paper</span><span class="work-tag">PAPI</span></div>
+      <a class="work-link" href="https://github.com/shacoladny-cloud/ChatManager" target="_blank" rel="noopener">View on GitHub <span>→</span></a>
+    </div>
+  </div>
+</section>
+
+<section id="tools" class="tools glass">
+  <div class="tools-head">
+    <h3 data-i18n="tools.h">Tech Stack</h3>
+    <span class="mono" data-i18n="tools.k">Stack</span>
+  </div>
+  <div class="tools-row">
+    <span class="tool"><span class="dot"></span>Java 21 <span class="role">primary</span></span>
+    <a class="tool" href="https://papermc.io/" target="_blank" rel="noopener"><span class="dot" style="background:#2d2d2d;box-shadow:0 0 8px #2d2d2d"></span>Paper API</a>
+    <span class="tool"><span class="dot" style="background:#4479a1;box-shadow:0 0 8px #4479a1"></span>MySQL</span>
+    <span class="tool"><span class="dot" style="background:#dc382d;box-shadow:0 0 8px #dc382d"></span>Redis</span>
+    <span class="tool"><span class="dot" style="background:#02303a;box-shadow:0 0 8px #02303a"></span>Gradle</span>
+    <span class="tool"><span class="dot" style="background:#2496ed;box-shadow:0 0 8px #2496ed"></span>Docker</span>
+    <span class="tool"><span class="dot" style="background:#f05032;box-shadow:0 0 8px #f05032"></span>Git</span>
+    <span class="tool"><span class="dot" style="background:#000;box-shadow:0 0 8px #555"></span>IntelliJ IDEA</span>
+    <span class="tool"><span class="dot" style="background:#fcc624;box-shadow:0 0 8px #fcc624"></span>Linux</span>
+    <span class="tool"><span class="dot" style="background:#2088ff;box-shadow:0 0 8px #2088ff"></span>GitHub Actions</span>
+  </div>
+</section>
+
+<section id="contact" class="contact glass">
+  <h2><span data-i18n="contact.h1">Let's build</span> <span class="grad" data-i18n="contact.h2">something</span></h2>
+  <p class="sub" data-i18n="contact.sub">Got a server that needs plugins? Let's make it happen.</p>
+  <div class="contact-actions">
+    <a class="clink" href="https://github.com/shacoladny-cloud" target="_blank" rel="noopener" data-i18n-tip="tip.gh">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.15-1.1-1.46-1.1-1.46-.9-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.1-4.56-4.9 0-1.08.39-1.96 1.03-2.65-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02.8-.22 1.65-.33 2.5-.33.85 0 1.7.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.69 1.03 1.57 1.03 2.65 0 3.8-2.34 4.65-4.57 4.89.36.31.68.92.68 1.85v2.74c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0012 2z"/></svg>
+      <span class="name">GitHub</span><span class="handle">shacoladny-cloud</span>
+    </a>
+    <a class="clink" href="mailto:shacoladny.cloud@gmail.com" target="_blank" rel="noopener" data-i18n-tip="tip.email">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      <span class="name">Email</span><span class="handle">shacoladny.cloud</span>
+    </a>
+    <a class="clink" href="https://t.me/HaziSOG" target="_blank" rel="noopener" data-i18n-tip="tip.tg">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>
+      <span class="name">Telegram</span><span class="handle">@HaziSOG</span>
+    </a>
+  </div>
+</section>
+
+<footer>
+  <span>© 2026 Hazi_SOG</span>
+  <span data-i18n="footer.r">async-first, always</span>
+  <span style="opacity:.7"><span data-i18n="footer.by">crafted with</span> ☕</span>
+</footer>
+
+</div>
+
+<script>
+const i18n = {
+  en:{
+    "nav.logo":"Hazi_SOG","nav.home":"Home","nav.works":"Works","nav.tools":"Stack","nav.contact":"Contact","nav.avail":"Available",
+    "hero.eyebrow":"Minecraft Plugin Developer · Paper · since 2024",
+    "hero.sub":"I craft high-performance Minecraft plugins for Paper 1.21 servers — async-first, backed by Redis & MySQL, built to scale.",
+    "hero.cta1":"Get in touch","hero.cta2":"See my plugins",
+    "works.h1":"Featured","works.h2":"projects",
+    "works.mgc":"A full-featured minigame framework for Paper 1.21 with BedWars, SkyWars & CTF.",
+    "works.clans":"Cross-server clan system with async operations, Redis pub/sub, and MySQL persistence.",
+    "works.chat":"Advanced chat management with global/local chat modes, player mentions, and PlaceholderAPI.",
+    "tools.h":"Tech Stack","tools.k":"Stack",
+    "contact.h1":"Let's build","contact.h2":"something",
+    "contact.sub":"Got a server that needs plugins? Let's make it happen.",
+    "tip.gh":"GitHub","tip.tg":"Telegram","tip.email":"Send an email",
+    "footer.r":"async-first, always","footer.by":"crafted with",
+  },
+  ru:{
+    "nav.logo":"Hazi_SOG","nav.home":"Главная","nav.works":"Проекты","nav.tools":"Стек","nav.contact":"Связь","nav.avail":"Открыт",
+    "hero.eyebrow":"Minecraft Plugin Developer · Paper · с 2024",
+    "hero.sub":"Создаю высокопроизводительные плагины для Paper 1.21 — асинхронные, на Redis и MySQL, готовые к масштабированию.",
+    "hero.cta1":"Связаться","hero.cta2":"Мои плагины",
+    "works.h1":"Мои","works.h2":"проекты",
+    "works.mgc":"Фреймворк мини-игр для Paper 1.21 с BedWars, SkyWars и CTF.",
+    "works.clans":"Кросс-серверная система кланов с асинхронностью, Redis pub/sub и MySQL.",
+    "works.chat":"Продвинутое управление чатом с режимами, упоминаниями и PlaceholderAPI.",
+    "tools.h":"Технологии","tools.k":"Стек",
+    "contact.h1":"Давайте","contact.h2":"создадим",
+    "contact.sub":"Нужны плагины для сервера? Напишите мне.",
+    "tip.gh":"GitHub","tip.tg":"Telegram","tip.email":"Написать на почту",
+    "footer.r":"async-first, always","footer.by":"сделано с",
+  }
+};
+function setLang(l){
+  document.documentElement.lang = l;
+  document.querySelectorAll("[data-i18n]").forEach(el=>{
+    const k = el.getAttribute("data-i18n"); const v = i18n[l][k];
+    if (v == null) return;
+    el.textContent = v;
+  });
+  document.querySelectorAll("[data-i18n-tip]").forEach(el=>{
+    const k = el.getAttribute("data-i18n-tip"); const v = i18n[l][k];
+    if (v != null) el.setAttribute("data-tip", v);
+  });
+  document.querySelectorAll(".lang button").forEach(b=>b.classList.toggle("on", b.dataset.lang === l));
+  try { localStorage.setItem("shaco_lang", l); } catch(e){}
+}
+document.querySelectorAll(".lang button").forEach(b=>b.addEventListener("click", ()=>setLang(b.dataset.lang)));
+setLang((()=>{ try { return localStorage.getItem("shaco_lang") || "en"; } catch(e){ return "en"; }})());
+
+(function(){
+  const navLinks = document.querySelectorAll('.nav .menu a');
+  const sectionIds = ['home','works','tools','contact'];
+  const sections = sectionIds.map(id=>document.getElementById(id)).filter(Boolean);
+  const setActive = (id)=>{
+    navLinks.forEach(a=>{
+      const href = a.getAttribute('href');
+      a.classList.toggle('active', href === '#' + id);
+    });
+  };
+  const spy = new IntersectionObserver(es=>{
+    const visible = es.filter(e=>e.isIntersecting)
+                      .sort((a,b)=>b.intersectionRatio - a.intersectionRatio)[0];
+    if (visible) setActive(visible.target.id);
+  }, { rootMargin: '-40% 0px -55% 0px', threshold: [0, 0.25, 0.5, 0.75, 1] });
+  sections.forEach(s=>spy.observe(s));
+})();
+
+const io = new IntersectionObserver(es=>{ es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target);} }); }, {threshold:.06});
+document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
+
+(function(){
+  const el = document.querySelector('.ambient');
+  if (!el) return;
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduced) return;
+
+  let target = window.scrollY, current = target, raf = null;
+
+  function apply(s){
+    const k = s * 0.0017;
+    const sin = Math.sin, cos = Math.cos;
+
+    const MIN = 22;
+    const b1x  = 20 + sin(k*2.1) * 20;
+    const b1y  = 15 + cos(k*1.7) * 16 + sin(k*0.6) * 10;
+    const b1rx = Math.max(MIN, 40 + sin(k*1.3) * 28);
+    const b1ry = Math.max(MIN, 35 + cos(k*1.9) * 24);
+
+    const b2x  = 80 + cos(k*2.4) * 22;
+    const b2y  = 25 + sin(k*1.4) * 20;
+    const b2rx = Math.max(MIN, 35 + cos(k*1.6) * 26);
+    const b2ry = Math.max(MIN, 30 + sin(k*2.0) * 28);
+
+    const b3x  = 50 + sin(k*1.8) * 26;
+    const b3y  = 90 + cos(k*1.2) * 14;
+    const b3rx = Math.max(MIN, 50 + cos(k*1.5) * 30);
+    const b3ry = Math.max(MIN, 40 + sin(k*2.3) * 24);
+
+    const st = el.style;
+    st.setProperty('--b1x', b1x.toFixed(2)+'%');
+    st.setProperty('--b1y', b1y.toFixed(2)+'%');
+    st.setProperty('--b1rx', b1rx.toFixed(2)+'%');
+    st.setProperty('--b1ry', b1ry.toFixed(2)+'%');
+    st.setProperty('--b2x', b2x.toFixed(2)+'%');
+    st.setProperty('--b2y', b2y.toFixed(2)+'%');
+    st.setProperty('--b2rx', b2rx.toFixed(2)+'%');
+    st.setProperty('--b2ry', b2ry.toFixed(2)+'%');
+    st.setProperty('--b3x', b3x.toFixed(2)+'%');
+    st.setProperty('--b3y', b3y.toFixed(2)+'%');
+    st.setProperty('--b3rx', b3rx.toFixed(2)+'%');
+    st.setProperty('--b3ry', b3ry.toFixed(2)+'%');
+  }
+
+  function tick(){
+    current += (target - current) * 0.08;
+    apply(current);
+    if (Math.abs(target - current) > 0.3) {
+      raf = requestAnimationFrame(tick);
+    } else {
+      apply(target);
+      raf = null;
+    }
+  }
+
+  window.addEventListener('scroll', ()=>{
+    target = window.scrollY;
+    if (raf == null) raf = requestAnimationFrame(tick);
+  }, { passive: true });
+
+  apply(target);
+})();
+</script>
+
+</body>
+</html>
